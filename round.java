@@ -1,96 +1,142 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-
-/** Rrumbullakimi i numrave dhjetorë pozitiv
-  */
-public class round {
-
+public class Round {
     public static void main(String[] args) {
-        System.out.println("Numri 0.9999 ne 3 shifra: " + fnRrumbullakso(0.9999,3));
-        System.out.println("Numri 9665.3667 ne 1 shifra: " + fnRrumbullakso(9665.3667,1));
-        System.out.println("Numri 235.36 ne 4 shifra: " + fnRrumbullakso(235.36,4));
+        Round k = new Round();
+        // 1.
+        double d1 = 7.82495;
+        int i = 5;
+        System.out.print(d1);
+        while (i>0) {
+            d1 = k.round(d1,i);
+            System.out.print(" => " + d1);
+            i--;
+        }
+        System.out.println();
+        // 2.
+        double d2 = 9.567526;
+        int j = 6;
+        System.out.print(d2);
+        while (j>0) {
+            d2 = k.round(d2,j);
+            System.out.print(" => " + d2);
+            j--;
+        }
+        
     }
 
-    public static double fnRrumbullakso(double numri, int shifra) {
-        int check_for_float = (int) numri;
-        boolean isfloat = numri - check_for_float != 0;
+    public double round(double x, int n){
+        String s = "";
+        if(x%1==0)
+            s += (int)x;
+        else
+            s += x;
 
-        // "123.456" -> ["1", "2", "3", ".", "4", "5", "6"]
-        String kopja = numri+"";
-        ArrayList<String> sarr = new ArrayList<String>(Arrays.asList(kopja.split("")));
-
-        // Gjetja e pozitës së pikës
-        int point = 0;
-        if (isfloat) {
-            while (!sarr.get(point).equals(".")) {
-                point++;
+        String[] temp = s.split("");
+        if(s.contains(".")){
+            // Pozita e pikes (".")
+            int i = 0;
+            while (i < temp.length) {
+                if(temp[i].equals("."))
+                    break;
+                i++;
             }
-        }
 
-        // ["1", "2", "3", ".", "4", "5", "6"] -> [1, 2, 3, 4, 5, 6]
-        ArrayList<Integer> arr = new ArrayList<Integer>();
-        for (String k : sarr) {
-            if (!k.equals(".")) {
-                arr.add(Integer.valueOf(k));
+            int[] arr = new int[temp.length-1];
+            for (int j = 0, k = 0; j < arr.length; j++, k++) {
+                if(j==i)
+                    k++;
+                arr[j] = Integer.valueOf(temp[k]);
             }
-        }
 
-        // Në këtë variabël ruajmë mbetjen pasi të kryejmë rrumbullakimin. P.sh [9, 9, 9] do të kemi mbetjen 1 dhe [0, 0, 0]
-        int last = 0;
-        // Fillojmë nga numri me më së paku rëndësi dmth numri i fundit në varg dhe ndalemi nëse kemi arritur deri te shifra e dëshiruar që dëshirojmë të kryejmë rrumbullakimin (i >= shifra)
-        for (int i = arr.size()-1; i >= 0 && i >= shifra; i--) {
-            // Rrumbullakimi
-            if (arr.get(i) <= 4) {
-                arr.set(i,0);
-            } else if (arr.get(i) <= 9){
-                arr.set(i,10);
+            int[] r = doRound(arr,n);
+            if(arr[0] == 9 && arr[0] != r[0])
+                i++;
+            String result = "";
+            for (int j = 0; j < r.length; j++) {
+                if(i==j)
+                    result += ".";
+                result += r[j];
             }
-            // Balancojmë vargun, P.sh [1, 2, 3, 4, 5, 10] -> [1, 2, 3, 4, 6, 0]. Shiko metodën rebalance për më shumë detaje
-            last = rebalance(arr, arr.size()-1);
-        }
-        // Nëse kemi mbetje shtoje në fillim të vargut
-        if (last == 1) {
-            arr.add(0,1);
-        }
-        // Nëse kemi mbetje dhe kemi shtuar mbetjen në fillim të vargut atëherë pika do të lëvizë për një numër më në të djathtë
-        point += last;
 
-        // Kthejmë vargun e int-ave në varg të stringjeve
-        ArrayList<String> OutputString = new ArrayList<>();
-        for (Integer k : arr) {
-            OutputString.add(String.valueOf(k));
+            return Double.valueOf(result);
         }
-        // Shtojmë pikën në pozitën e duhur
-        OutputString.add(point, ".");
 
-        // Kthejmë vargun e stringjeve në një string të vetëm, P.sh ["1", "2", "3", ".", ""]
-        String listString = String.join("", OutputString);
+        int[] arr = new int[temp.length];
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = Integer.valueOf(temp[i]);
+        }
 
-        // Kthejmë stringun e mësipërm në Double dhe e kthejmë
-        return Double.parseDouble(listString);
+        int[] r = doRound(arr,n);
+        String result = "";
+        for (int j = 0; j < r.length; j++) {
+            result += r[j];
+        }
+        return Double.valueOf(result);
     }
 
-    // Magji :D
-    // [9, 9, 9, 9, 9, 9, 10]
-    //                   <--
-    // [9, 9, 9, 9, 9, 10, 0]
-    //          -//-
-    //  X--
-    // [0, 0, 0, 0, 0, 0, 0]
-    // Në këtë rast kthejmë mbetjen 1
-    private static int rebalance(ArrayList<Integer> a, int i) {
-        if (i == 0) {
-            if (a.get(0) == 10) {
-                a.set(0, 0);
-                return 1;
-            } else {
-                return 0;
+    public int[] doRound(int[] arr, int n){
+        // z - numri i zerove ne fillim.
+        int z = 0;
+        for (int i = 0; i < arr.length; i++) {
+            if(arr[i]!=0)
+                break;
+            z++;
+        }
+        if(n+z >= arr.length){
+            return arr;
+        }
+
+        if(arr[n+z]<5){
+            int[] r = new int[n+z];
+            for (int i = 0; i < r.length; i++)
+                r[i] = arr[i];
+
+            return r;
+        }
+        
+        int[] temp = new int[arr.length];
+        for (int i = 0; i < temp.length; i++)
+            temp[i] = arr[i];
+        
+        boolean t = false;
+        if (arr[n+z-1]==9) {
+            int i = n+z-1;
+            while(temp[i]==9){
+                if(i==0){
+                    if(temp[0] == 9){
+                        int[] r = new int[temp.length+1];
+                        r[0] = 1;
+                        return r;
+                    }
+                    int[] r = new int[temp.length];
+                    r[0] = arr[0]+1;
+                    return r;
+                }
+                temp[i] = 0;
+                if(temp[i-1]!=9){
+                    temp[i-1] += 1;
+                    if(i-1==0)
+                        t = true;
+                    break;
+                }
+                i--;
             }
+            if(t){
+                int[] r = new int[temp.length];
+                for (int j = 0; j < n+z ; j++)
+                r[j] = temp[j];
+                return r;
+            }
+            int[] r = new int[n+z];
+            for (int j = 0; j < r.length; j++)
+                r[j] = temp[j];
+            return r;
         }
-        if (a.get(i) == 10) {
-            a.set(i, 0);
-            a.set(i-1, a.get(i-1)+1);
+
+        int[] r = new int[n+z];
+        for (int i = 0; i < r.length-1; i++) {
+            r[i] = temp[i];
         }
-        return rebalance(a,i-1);
+        r[r.length-1] = temp[r.length-1]+1;
+        return r;
     }
 }
